@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, DimensionValue, Text, View } from 'react-native';
+import { ActivityIndicator, DimensionValue, View } from 'react-native';
 
 import { styles } from './styles';
 
@@ -13,8 +13,6 @@ export function OpeningBook({ width, height, backgroundColor }: Props) {
   return (
     <View style={[styles.container, { width, height, backgroundColor }]}>
       <ActivityIndicator size="large" />
-
-      <Text style={styles.text}>Opening</Text>
     </View>
   );
 }
