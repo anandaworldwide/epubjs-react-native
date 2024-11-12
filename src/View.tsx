@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, View as RNView, LogBox } from 'react-native';
+import { Dimensions, View as RNView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type {
   ShouldStartLoadRequest,
@@ -493,7 +493,7 @@ export function View({
         }}
         onContentProcessDidTerminate={(syntheticEvent: any) => {
           const { nativeEvent } = syntheticEvent;
-          LogBox.warn('Content process terminated, reloading', nativeEvent);
+          console.warn('Content process terminated, reloading', nativeEvent);
           book.current?.reload();
         }}
       />
