@@ -1,11 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import type { LoadingFileProps, ReaderProps } from 'src/types';
 
 import { styles } from './styles';
 
 export function LoadingFile({
-  downloadProgress,
+  // downloadProgress,
   width,
   height,
 }: LoadingFileProps & Pick<ReaderProps, 'width' | 'height'>) {

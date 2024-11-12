@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, View as RNView } from 'react-native';
+import { Dimensions, View as RNView, LogBox } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type {
   ShouldStartLoadRequest,
@@ -478,7 +478,7 @@ export function View({
         allowFileAccessFromFileURLs
         allowFileAccess
         javaScriptCanOpenWindowsAutomatically
-        onOpenWindow={(event) => {
+        onOpenWindow={(event: any) => {
           event.preventDefault();
 
           if (onPressExternalLink) {
@@ -491,10 +491,10 @@ export function View({
           backgroundColor: theme.body.background,
           height,
         }}
-        onContentProcessDidTerminate={(syntheticEvent) => {
+        onContentProcessDidTerminate={(syntheticEvent: any) => {
           const { nativeEvent } = syntheticEvent;
-          console.warn('Content process terminated, reloading', nativeEvent);
-          this.refs.webview.reload();
+          LogBox.warn('Content process terminated, reloading', nativeEvent);
+          book.current?.reload();
         }}
       />
     </GestureHandler>
