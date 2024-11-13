@@ -69,6 +69,7 @@ export function View({
   onUpdateBookmark = () => { },
   onChangeBookmarks = () => { },
   onIsBookmarked = () => { },
+  onContentProcessDidTerminate = () => { },
   initialBookmarks,
   injectedJavascript,
   getInjectionJavascriptFn,
@@ -491,11 +492,7 @@ export function View({
           backgroundColor: theme.body.background,
           height,
         }}
-        onContentProcessDidTerminate={(syntheticEvent: any) => {
-          const { nativeEvent } = syntheticEvent;
-          console.warn('Content process terminated, reloading', nativeEvent);
-          book.current?.reload();
-        }}
+        onContentProcessDidTerminate={onContentProcessDidTerminate}
       />
     </GestureHandler>
   );

@@ -215,6 +215,12 @@ export interface ReaderProps {
    */
   onDisplayError?: (reason: string) => void;
   /**
+   * Called once book has not been displayed due to content process termination
+   * @param {any} event
+   * @returns {void} void
+   */
+  onContentProcessDidTerminate?: (event: any) => void;
+  /**
    * Emit that the rendition has been resized
    * @param {any} layout
    * @returns {void} void
