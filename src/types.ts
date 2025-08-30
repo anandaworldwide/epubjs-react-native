@@ -144,12 +144,29 @@ type FileSystem = {
   size: number;
   error: string | null;
   success: boolean;
+  /**
+   * `file://` URI pointing to the directory where user documents for this app will be stored.
+   * Files stored here will remain until explicitly deleted by the app. Ends with a trailing `/`.
+   * Example uses are for files the user saves that they expect to see again.
+   */
   documentDirectory: string | null;
+  /**
+   * `file://` URI pointing to the directory where temporary files used by this app will be stored.
+   * Files stored here may be automatically deleted by the system when low on storage.
+   * Example uses are for downloaded or generated files that the app just needs for one-time usage.
+   */
   cacheDirectory: string | null;
-  bundleDirectory: string | null;
+  /**
+   * URI to the directory where assets bundled with the application are stored.
+   */
+  bundleDirectory: string | undefined;
   readAsStringAsync: (
     fileUri: string,
     options?: {
+      /**
+       * The encoding format to use when reading the file.
+       * @default 'utf8'
+       */
       encoding?: 'utf8' | 'base64';
     }
   ) => Promise<string>;
@@ -157,6 +174,10 @@ type FileSystem = {
     fileUri: string,
     contents: string,
     options?: {
+      /**
+       * The encoding format to use when reading the file.
+       * @default 'utf8'
+       */
       encoding?: 'utf8' | 'base64';
     }
   ) => Promise<void>;
@@ -280,8 +301,11 @@ export interface ReaderProps {
    * @param {any} section
    * @param {any} currentSection
    * @returns {void} void
+   *
+   * @deprecated use **onChangeSection** instead
    */
   onRendered?: (section: any, currentSection: any) => void;
+  onChangeSection?: (section: Section | null) => void;
   /**
    * Called when book layout is change
    * @param {string} layout
@@ -473,4 +497,9 @@ export interface ReaderProps {
    * Default is false
    */
   keepScrollOffsetOnLocationChange?: boolean;
+
+  /**
+   * Default is 1600
+   */
+  charactersPerLocation?: number;
 }
