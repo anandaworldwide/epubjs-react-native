@@ -1,9 +1,12 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, lazy, Suspense } from 'react';
 import { Platform } from 'react-native';
 import { LoadingFile } from './utils/LoadingFile';
 import type { ReaderProps } from './types';
-import { View } from './View';
 import { useInjectWebViewVariables } from './hooks/useInjectWebviewVariables';
+
+// Lazy load View to defer react-native-webview import until runtime
+// This fixes bridgeless mode compatibility
+const View = lazy(() => import('./View').then((m) => ({ default: m.View })));
 import { ReaderContext, defaultTheme as initialTheme } from './context';
 import { isURL } from './utils/isURL';
 import { getSourceType } from './utils/getSourceType';
@@ -246,19 +249,28 @@ export function Reader({
     });
   }
   return (
-    <View
-      templateUri={templateUrl}
-      allowedUris={allowedUris}
-      width={width}
-      height={height}
-      defaultTheme={defaultTheme || initialTheme}
-      onPressExternalLink={onPressExternalLink}
-      enableSelection={enableSelection}
-      menuItems={menuItems}
-      manager={manager}
-      flow={flow}
-      snap={snap}
-      {...rest}
-    />
+    <Suspense
+      fallback={renderLoadingFileComponent({
+        fileSize,
+        downloadProgress,
+        downloadSuccess,
+        downloadError,
+      })}
+    >
+      <View
+        templateUri={templateUrl}
+        allowedUris={allowedUris}
+        width={width}
+        height={height}
+        defaultTheme={defaultTheme || initialTheme}
+        onPressExternalLink={onPressExternalLink}
+        enableSelection={enableSelection}
+        menuItems={menuItems}
+        manager={manager}
+        flow={flow}
+        snap={snap}
+        {...rest}
+      />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, DimensionValue, View } from 'react-native';
 
-import { styles } from './styles';
+import { getStyles } from './styles';
 
 interface Props {
   width?: DimensionValue;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export function OpeningBook({ width, height, backgroundColor }: Props) {
+  const styles = getStyles();
   return (
     <View style={[styles.container, { width, height, backgroundColor }]}>
       <ActivityIndicator size="large" />
