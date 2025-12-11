@@ -1,0 +1,15 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+. "$(dirname "$0")/common.sh"
+
+[ -n "$CI" ] && exit 0
+
+# Verify build is up to date before pushing
+echo "Verifying build..."
+yarn build
+
+# Check if there are uncommitted changes to lib/
+if ! git diff --quiet lib/; then
+  echo "Error: lib/ has uncommitted changes after build. Please commit the build output."
+  exit 1
+fi
