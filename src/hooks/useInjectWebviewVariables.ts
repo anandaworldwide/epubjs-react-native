@@ -21,6 +21,7 @@ export function useInjectWebViewVariables() {
       spread,
       fullsize,
       charactersPerLocation = 1600,
+      initialLocation,
     }: {
       jszip: string;
       epubjs: string;
@@ -37,6 +38,7 @@ export function useInjectWebViewVariables() {
       spread?: Spread;
       fullsize?: boolean;
       charactersPerLocation?: number;
+      initialLocation?: string;
     }) => {
       return template
         .replace(
@@ -56,6 +58,10 @@ export function useInjectWebViewVariables() {
         .replace(
           /const initialLocations = window.locations;/,
           `const initialLocations = ${locations};`
+        )
+        .replace(
+          /const initialLocation = window.initialLocation;/,
+          `const initialLocation = ${initialLocation ? JSON.stringify(initialLocation) : undefined};`
         )
         .replace(
           /const enableSelection = window.enable_selection;/,

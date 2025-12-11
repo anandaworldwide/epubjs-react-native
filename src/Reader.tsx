@@ -22,6 +22,7 @@ export function Reader({
   height = '100%',
   defaultTheme = initialTheme,
   initialLocations,
+  initialLocation,
   allowScriptedContent = Platform.OS === 'ios',
   onPressExternalLink,
   renderLoadingFileComponent = (props) => (
@@ -106,6 +107,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                initialLocation,
               })
             );
 
@@ -128,6 +130,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                initialLocation,
               })
             );
 
@@ -160,6 +163,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                initialLocation,
               })
             );
 
@@ -188,6 +192,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                initialLocation,
               })
             );
 
@@ -204,6 +209,7 @@ export function Reader({
     documentDirectory,
     downloadFile,
     enableSelection,
+    initialLocation,
     initialLocations,
     injectWebViewVariables,
     setIsLoading,
@@ -269,6 +275,7 @@ export function Reader({
         manager={manager}
         flow={flow}
         snap={snap}
+        initialLocation={initialLocation}
         {...rest}
       />
     </Suspense>

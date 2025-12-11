@@ -1,7 +1,7 @@
 import type { Flow, Manager, Spread, Theme, ePubCfi } from '../types';
 import type { SourceType } from '../utils/enums/source-type.enum';
 export declare function useInjectWebViewVariables(): {
-    injectWebViewVariables: ({ jszip, epubjs, type, book, theme, enableSelection, locations, allowScriptedContent, allowPopups, manager, flow, snap, spread, fullsize, charactersPerLocation, }: {
+    injectWebViewVariables: ({ jszip, epubjs, type, book, theme, enableSelection, locations, allowScriptedContent, allowPopups, manager, flow, snap, spread, fullsize, charactersPerLocation, initialLocation, }: {
         jszip: string;
         epubjs: string;
         type: SourceType;
@@ -17,6 +17,7 @@ export declare function useInjectWebViewVariables(): {
         spread?: Spread;
         fullsize?: boolean;
         charactersPerLocation?: number;
+        initialLocation?: string;
     }) => string;
 };
 //# sourceMappingURL=useInjectWebviewVariables.d.ts.map

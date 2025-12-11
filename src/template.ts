@@ -22,6 +22,7 @@ export default `
         display: flex;
         justify-content: center;
         align-items: center;
+        visibility: hidden;
       }
 
       [ref="epubjs-mk-balloon"] {
@@ -48,11 +49,14 @@ export default `
     <script>
       let book;
       let rendition;
+      let isReady = false;
+      var readyTimeout = null;
 
       const type = window.type;
       const file = window.book;
       const theme = window.theme;
       const initialLocations = window.locations;
+      const initialLocation = window.initialLocation;
       const enableSelection = window.enable_selection;
 
       if (!file) {
@@ -176,18 +180,26 @@ export default `
           });
         })
         .then(function () {
-          var displayed = rendition.display();
+          // Display at initial location - onReady will be sent from relocated handler
+          rendition.display(initialLocation || undefined);
 
-          displayed.then(function () {
-            var currentLocation = rendition.currentLocation();
-
-            reactNativeWebview.postMessage(JSON.stringify({
-              type: "onReady",
-              totalLocations: book.locations.total,
-              currentLocation: currentLocation,
-              progress: book.locations.percentageFromCfi(currentLocation.start.cfi),
-            }));
-          });
+          // Fallback timeout to show viewer if location matching fails
+          readyTimeout = setTimeout(function() {
+            if (!isReady) {
+              isReady = true;
+              document.getElementById('viewer').style.visibility = 'visible';
+              var currentLocation = rendition.currentLocation();
+              if (currentLocation) {
+                var percent = book.locations.percentageFromCfi(currentLocation.start.cfi);
+                reactNativeWebview.postMessage(JSON.stringify({
+                  type: "onReady",
+                  totalLocations: book.locations.total,
+                  currentLocation: currentLocation,
+                  progress: Math.floor(percent * 100),
+                }));
+              }
+            }
+          }, 500);
 
           book
           .coverUrl()
@@ -252,6 +264,29 @@ export default `
         var percent = book.locations.percentageFromCfi(location.start.cfi);
         var percentage = Math.floor(percent * 100);
         var chapter = getChapter(location);
+
+        // Show viewer and send onReady only when we're at the correct location
+        if (!isReady) {
+          // Check if we've reached the initial location (or if none was specified)
+          var atCorrectLocation = !initialLocation ||
+            location.start.cfi.indexOf(initialLocation) !== -1 ||
+            initialLocation.indexOf(location.start.cfi) !== -1 ||
+            (location.start.href && initialLocation.indexOf(location.start.href) !== -1) ||
+            (location.start.href && location.start.href.indexOf(initialLocation) !== -1);
+
+          if (atCorrectLocation) {
+            isReady = true;
+            clearTimeout(readyTimeout);
+            document.getElementById('viewer').style.visibility = 'visible';
+
+            reactNativeWebview.postMessage(JSON.stringify({
+              type: "onReady",
+              totalLocations: book.locations.total,
+              currentLocation: location,
+              progress: percentage,
+            }));
+          }
+        }
 
         reactNativeWebview.postMessage(JSON.stringify({
           type: "onLocationChange",

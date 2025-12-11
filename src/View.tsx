@@ -41,7 +41,6 @@ export function View({
   onLongPress = () => {},
   width,
   height,
-  initialLocation,
   enableSwipe = true,
   onSwipeLeft = () => {},
   onSwipeRight = () => {},
@@ -173,10 +172,6 @@ export function View({
 
       if (initialAnnotations) {
         setInitialAnnotations(initialAnnotations);
-      }
-
-      if (initialLocation) {
-        goToLocation(initialLocation);
       }
 
       if (injectedJavascript) {
@@ -497,6 +492,7 @@ export function View({
           width,
           backgroundColor: theme.body.background,
           height,
+          opacity: isRendering ? 0 : 1,
         }}
         onContentProcessDidTerminate={onContentProcessDidTerminate}
       />
