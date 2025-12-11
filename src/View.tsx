@@ -19,34 +19,34 @@ export type ViewProps = Omit<ReaderProps, 'src' | 'fileSystem'> & {
 export function View({
   templateUri,
   allowedUris,
-  onStarted = () => { },
-  onReady = () => { },
-  onDisplayError = () => { },
-  onResized = () => { },
-  onLocationChange = () => { },
-  onRendered = () => { },
-  onSearch = () => { },
-  onLocationsReady = () => { },
-  onSelected = () => { },
-  onPressAnnotation = () => { },
-  onOrientationChange = () => { },
-  onLayout = () => { },
-  onNavigationLoaded = () => { },
-  onBeginning = () => { },
-  onFinish = () => { },
-  onPress = () => { },
-  onSingleTap = () => { },
-  onDoublePress = () => { },
-  onDoubleTap = () => { },
-  onLongPress = () => { },
+  onStarted = () => {},
+  onReady = () => {},
+  onDisplayError = () => {},
+  onResized = () => {},
+  onLocationChange = () => {},
+  onRendered = () => {},
+  onSearch = () => {},
+  onLocationsReady = () => {},
+  onSelected = () => {},
+  onPressAnnotation = () => {},
+  onOrientationChange = () => {},
+  onLayout = () => {},
+  onNavigationLoaded = () => {},
+  onBeginning = () => {},
+  onFinish = () => {},
+  onPress = () => {},
+  onSingleTap = () => {},
+  onDoublePress = () => {},
+  onDoubleTap = () => {},
+  onLongPress = () => {},
   width,
   height,
   initialLocation,
   enableSwipe = true,
-  onSwipeLeft = () => { },
-  onSwipeRight = () => { },
-  onSwipeUp = () => { },
-  onSwipeDown = () => { },
+  onSwipeLeft = () => {},
+  onSwipeRight = () => {},
+  onSwipeUp = () => {},
+  onSwipeDown = () => {},
   defaultTheme = initialTheme,
   renderOpeningBookComponent = () => (
     <OpeningBook
@@ -61,15 +61,15 @@ export function View({
   },
   onPressExternalLink,
   menuItems,
-  onAddAnnotation = () => { },
-  onChangeAnnotations = () => { },
+  onAddAnnotation = () => {},
+  onChangeAnnotations = () => {},
   initialAnnotations,
-  onAddBookmark = () => { },
-  onRemoveBookmark = () => { },
-  onUpdateBookmark = () => { },
-  onChangeBookmarks = () => { },
-  onIsBookmarked = () => { },
-  onContentProcessDidTerminate = () => { },
+  onAddBookmark = () => {},
+  onRemoveBookmark = () => {},
+  onUpdateBookmark = () => {},
+  onChangeBookmarks = () => {},
+  onIsBookmarked = () => {},
+  onContentProcessDidTerminate = () => {},
   initialBookmarks,
   injectedJavascript,
   getInjectionJavascriptFn,
@@ -312,7 +312,7 @@ export function View({
     if (type === 'onSetInitialAnnotations') {
       const { annotations } = parsedEvent;
       setAnnotations(annotations);
-      return () => { };
+      return () => {};
     }
 
     if (type === 'onPressAnnotation') {
@@ -359,7 +359,7 @@ export function View({
       return onChangeBookmarks(Bookmarks);
     }
 
-    return () => { };
+    return () => {};
   };
 
   const handleOnCustomMenuSelection = (event: {

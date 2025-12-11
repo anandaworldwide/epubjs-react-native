@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
 
-let _styles: ReturnType<typeof StyleSheet.create> | null = null;
+let cachedStyles: ReturnType<typeof StyleSheet.create> | null = null;
 
 export const getStyles = () => {
-  if (!_styles) {
-    _styles = StyleSheet.create({
+  if (!cachedStyles) {
+    cachedStyles = StyleSheet.create({
       container: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -13,5 +13,5 @@ export const getStyles = () => {
       text: { marginTop: 20, fontSize: 18 },
     });
   }
-  return _styles;
+  return cachedStyles;
 };

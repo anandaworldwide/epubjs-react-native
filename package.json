@@ -29,6 +29,7 @@
     "test": "jest --watch --runInBand --passWithNoTests",
     "test:coverage": "jest --coverage --no-cache --runInBand --passWithNoTests --forceExit",
     "build": "bob build",
+    "prerelease": "yarn lint && yarn type-check && yarn test:coverage",
     "release": "yarn build && npm publish",
     "release:beta": "yarn build && npm publish --tag beta",
     "release:alpha": "yarn build && npm publish --tag alpha",

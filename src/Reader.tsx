@@ -3,10 +3,6 @@ import { Platform } from 'react-native';
 import { LoadingFile } from './utils/LoadingFile';
 import type { ReaderProps } from './types';
 import { useInjectWebViewVariables } from './hooks/useInjectWebviewVariables';
-
-// Lazy load View to defer react-native-webview import until runtime
-// This fixes bridgeless mode compatibility
-const View = lazy(() => import('./View').then((m) => ({ default: m.View })));
 import { ReaderContext, defaultTheme as initialTheme } from './context';
 import { isURL } from './utils/isURL';
 import { getSourceType } from './utils/getSourceType';
@@ -15,6 +11,10 @@ import { SourceType } from './utils/enums/source-type.enum';
 import { isFsUri } from './utils/isFsUri';
 import jszip from './jszip';
 import epubjs from './epubjs';
+
+// Lazy load View to defer react-native-webview import until runtime
+// This fixes bridgeless mode compatibility
+const View = lazy(() => import('./View').then((m) => ({ default: m.View })));
 
 export function Reader({
   src,
