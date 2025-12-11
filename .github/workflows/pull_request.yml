@@ -1,9 +1,6 @@
 name: Pull Request
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     paths-ignore:
       - 'README.md'
@@ -54,3 +51,14 @@ jobs:
 
       - name: Build
         run: yarn build
+
+      - id: publish
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: true
+          check-version: true
+
+      - if: steps.publish.outputs.type != 'none' || steps.publish.outputs.version >= steps.publish.outputs.old-version
+        run: |
+          echo "Version changed: ${{ steps.publish.outputs.old-version }} => ${{ steps.publish.outputs.version }}"
