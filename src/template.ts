@@ -65,6 +65,7 @@ export default `
       var readyTimeout = null;
       var settleTimeout = null;
       var displayResolved = false;
+      var hasRendered = false;
       var lastRelocatedLocation = null;
       var relocatedCount = 0;
       var startTime = Date.now();
@@ -137,7 +138,7 @@ export default `
         return match;
       }
 
-      var TEMPLATE_VERSION = "v3-hybrid-settle";
+      var TEMPLATE_VERSION = "v4-event-based";
       debugLog("[EPUB] Template " + TEMPLATE_VERSION + " starting, type=" + type + ", file exists=" + !!file + ", initialLocation=" + initialLocation);
 
       if (!file) {
@@ -286,28 +287,33 @@ export default `
 
           rendition.display(initialLocation || undefined).then(function() {
             displayResolved = true;
-            debugLog("[EPUB] display() promise resolved, relocatedCount=" + relocatedCount);
+            debugLog("[EPUB] display() promise resolved, relocatedCount=" + relocatedCount + ", hasRendered=" + hasRendered);
 
-            // Don't show directly here - let the settle mechanism in relocated handler do it
-            // This ensures we wait for navigation to fully settle before showing
-            debugLog("[EPUB] display resolved, waiting for navigation to settle via relocated handler");
-
-            // If no relocated event has fired yet, set a check
-            if (!lastRelocatedLocation) {
-              debugLog("[EPUB] No relocated event yet, will check again shortly");
+            // If already rendered, we can show now
+            if (!isReady && hasRendered) {
+              debugLog("[EPUB] display resolved with hasRendered=true, triggering showViewer");
+              clearTimeout(settleTimeout);
+              settleTimeout = setTimeout(function() {
+                if (!isReady) {
+                  showViewer();
+                }
+              }, 100);
+            } else {
+              debugLog("[EPUB] display resolved, waiting for rendered event");
             }
           }).catch(function(err) {
             debugLog("[EPUB] display() promise rejected: " + (err.message || String(err)));
           });
 
-          // Fallback timeout - show after 1 second no matter what
+          // Safety net fallback - 10 seconds max wait
+          // This should rarely fire since event-based logic handles normal cases
           readyTimeout = setTimeout(function() {
-            debugLog("[EPUB] Fallback timeout (1000ms) fired, isReady=" + isReady + ", displayResolved=" + displayResolved);
+            debugLog("[EPUB] Safety fallback (10s) fired, isReady=" + isReady + ", displayResolved=" + displayResolved + ", hasRendered=" + hasRendered);
             if (!isReady) {
-              debugLog("[EPUB] Fallback: forcing showViewer");
+              debugLog("[EPUB] Safety fallback: forcing showViewer");
               showViewer();
             }
-          }, 1000);
+          }, 10000);
 
           book
           .coverUrl()
@@ -436,7 +442,20 @@ export default `
       });
 
       rendition.on("rendered", function (section, view) {
-        debugLog("[EPUB] 'rendered' event fired, section.href=" + section.href + ", isReady=" + isReady);
+        hasRendered = true;
+        debugLog("[EPUB] 'rendered' event fired, section.href=" + section.href + ", isReady=" + isReady + ", displayResolved=" + displayResolved);
+
+        // If display has resolved and we're not ready yet, we can now show
+        if (!isReady && displayResolved) {
+          debugLog("[EPUB] rendered: displayResolved=true, triggering showViewer");
+          clearTimeout(settleTimeout);
+          settleTimeout = setTimeout(function() {
+            if (!isReady) {
+              showViewer();
+            }
+          }, 100);
+        }
+
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onRendered',
           section: section,
