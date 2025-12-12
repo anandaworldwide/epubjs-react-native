@@ -802,7 +802,9 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const goToLocation = useCallback((targetCfi: ePubCfi) => {
-    book.current?.injectJavaScript(`rendition.display('${targetCfi}'); true`);
+    // Escape special characters to prevent JavaScript injection issues
+    const escaped = targetCfi.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    book.current?.injectJavaScript(`rendition.display('${escaped}'); true`);
   }, []);
 
   const goPrevious = useCallback(

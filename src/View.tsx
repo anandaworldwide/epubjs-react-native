@@ -282,6 +282,12 @@ export function View({
       return onRendered(parsedEvent.section, currentSection);
     }
 
+    if (type === 'onInternalLinkPress') {
+      const { href } = parsedEvent;
+      goToLocation(href);
+      return;
+    }
+
     if (type === 'onLayout') {
       const { layout } = parsedEvent;
 
@@ -386,13 +392,9 @@ export function View({
   const handleOnShouldStartLoadWithRequest = (
     request: ShouldStartLoadRequest
   ) => {
-    if (
-      !isRendering &&
-      request.mainDocumentURL &&
-      request.url !== request.mainDocumentURL
-    ) {
-      goToLocation(request.url.replace(request.mainDocumentURL, ''));
-    }
+    // Internal link navigation is now handled via JavaScript message passing
+    // (onInternalLinkPress) which is more reliable than this native callback.
+    // This handler now only deals with external links.
 
     if (
       (request.url.includes('mailto:') || request.url.includes('tel:')) &&
