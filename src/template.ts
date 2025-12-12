@@ -23,6 +23,18 @@ export default `
         justify-content: center;
         align-items: center;
         visibility: hidden;
+        opacity: 0;
+      }
+
+      #viewer.ready {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      /* Hide epub.js iframes until we're ready */
+      #viewer:not(.ready) iframe {
+        visibility: hidden !important;
+        opacity: 0 !important;
       }
 
       [ref="epubjs-mk-balloon"] {
@@ -51,6 +63,11 @@ export default `
       let rendition;
       let isReady = false;
       var readyTimeout = null;
+      var settleTimeout = null;
+      var displayResolved = false;
+      var lastRelocatedLocation = null;
+      var relocatedCount = 0;
+      var startTime = Date.now();
 
       const type = window.type;
       const file = window.book;
@@ -63,12 +80,65 @@ export default `
       const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
 
       function debugLog(msg) {
+        var elapsed = Date.now() - startTime;
         if (enableDebugLogging) {
-          reactNativeWebview.postMessage(JSON.stringify({ type: "onDebug", message: msg }));
+          reactNativeWebview.postMessage(JSON.stringify({ type: "onDebug", message: "[" + elapsed + "ms] " + msg }));
         }
       }
 
-      debugLog("[EPUB] Template starting, type=" + type + ", file exists=" + !!file);
+      function showViewer() {
+        if (isReady) {
+          debugLog("[EPUB] showViewer called but already ready, skipping");
+          return;
+        }
+
+        isReady = true;
+        clearTimeout(readyTimeout);
+        clearTimeout(settleTimeout);
+
+        var viewer = document.getElementById('viewer');
+        debugLog("[EPUB] showViewer: adding ready class to viewer");
+        viewer.classList.add('ready');
+
+        var currentLocation = rendition.currentLocation();
+        debugLog("[EPUB] showViewer: currentLocation=" + (currentLocation ? currentLocation.start.cfi : "null"));
+
+        if (currentLocation) {
+          var percent = book.locations.percentageFromCfi(currentLocation.start.cfi);
+          debugLog("[EPUB] showViewer: Sending onReady, progress=" + Math.floor(percent * 100));
+          reactNativeWebview.postMessage(JSON.stringify({
+            type: "onReady",
+            totalLocations: book.locations.total,
+            currentLocation: currentLocation,
+            progress: Math.floor(percent * 100),
+          }));
+        }
+      }
+
+      // Check if current location matches the intended initial location
+      function isAtCorrectLocation(location) {
+        if (!initialLocation) {
+          debugLog("[EPUB] isAtCorrectLocation: no initialLocation specified, returning true");
+          return true;
+        }
+
+        var cfi = location.start.cfi;
+        var href = location.start.href;
+
+        // Try various matching strategies
+        var cfiContainsInit = cfi && cfi.indexOf(initialLocation) !== -1;
+        var initContainsCfi = cfi && initialLocation.indexOf(cfi) !== -1;
+        var hrefContainsInit = href && initialLocation.indexOf(href) !== -1;
+        var initContainsHref = href && href.indexOf(initialLocation) !== -1;
+
+        var match = cfiContainsInit || initContainsCfi || hrefContainsInit || initContainsHref;
+
+        debugLog("[EPUB] isAtCorrectLocation: cfi=" + cfi + ", href=" + href + ", match=" + match);
+        return match;
+      }
+
+      var TEMPLATE_VERSION = "v3-hybrid-settle";
+      debugLog("[EPUB] Template " + TEMPLATE_VERSION + " starting, type=" + type + ", file exists=" + !!file + ", initialLocation=" + initialLocation);
 
       if (!file) {
         debugLog("[EPUB] ERROR: No file provided");
@@ -212,31 +282,32 @@ export default `
           }
         })
         .then(function () {
-          // Display at initial location - onReady will be sent from relocated handler
           debugLog("[EPUB] Calling rendition.display() with initialLocation: " + initialLocation);
-          rendition.display(initialLocation || undefined);
 
-          // Fallback timeout to show viewer if location matching fails
-          readyTimeout = setTimeout(function() {
-            debugLog("[EPUB] Fallback timeout fired, isReady=" + isReady);
-            if (!isReady) {
-              var currentLocation = rendition.currentLocation();
-              debugLog("[EPUB] Fallback: currentLocation=" + (currentLocation ? "exists" : "null"));
-              if (currentLocation) {
-                isReady = true;
-                document.getElementById('viewer').style.visibility = 'visible';
-                var percent = book.locations.percentageFromCfi(currentLocation.start.cfi);
-                debugLog("[EPUB] Fallback: Sending onReady");
-                reactNativeWebview.postMessage(JSON.stringify({
-                  type: "onReady",
-                  totalLocations: book.locations.total,
-                  currentLocation: currentLocation,
-                  progress: Math.floor(percent * 100),
-                }));
-              }
-              // Don't set isReady=true if currentLocation is null - let relocated handler try
+          rendition.display(initialLocation || undefined).then(function() {
+            displayResolved = true;
+            debugLog("[EPUB] display() promise resolved, relocatedCount=" + relocatedCount);
+
+            // Don't show directly here - let the settle mechanism in relocated handler do it
+            // This ensures we wait for navigation to fully settle before showing
+            debugLog("[EPUB] display resolved, waiting for navigation to settle via relocated handler");
+
+            // If no relocated event has fired yet, set a check
+            if (!lastRelocatedLocation) {
+              debugLog("[EPUB] No relocated event yet, will check again shortly");
             }
-          }, 500);
+          }).catch(function(err) {
+            debugLog("[EPUB] display() promise rejected: " + (err.message || String(err)));
+          });
+
+          // Fallback timeout - show after 1 second no matter what
+          readyTimeout = setTimeout(function() {
+            debugLog("[EPUB] Fallback timeout (1000ms) fired, isReady=" + isReady + ", displayResolved=" + displayResolved);
+            if (!isReady) {
+              debugLog("[EPUB] Fallback: forcing showViewer");
+              showViewer();
+            }
+          }, 1000);
 
           book
           .coverUrl()
@@ -294,40 +365,45 @@ export default `
         });
 
       rendition.on('started', () => {
+        debugLog("[EPUB] rendition 'started' event fired");
         rendition.themes.register({ theme: theme });
         rendition.themes.select('theme');
       });
 
       rendition.on("relocated", function (location) {
+        relocatedCount++;
+        lastRelocatedLocation = location;
+
         var percent = book.locations.percentageFromCfi(location.start.cfi);
         var percentage = Math.floor(percent * 100);
         var chapter = getChapter(location);
 
-        debugLog("[EPUB] relocated event, isReady=" + isReady + ", initialLocation=" + initialLocation);
+        debugLog("[EPUB] relocated event #" + relocatedCount + ", isReady=" + isReady + ", displayResolved=" + displayResolved + ", cfi=" + location.start.cfi + ", progress=" + percentage + "%");
 
-        // Show viewer and send onReady only when we're at the correct location
-        if (!isReady) {
-          // Check if we've reached the initial location (or if none was specified)
-          var atCorrectLocation = !initialLocation ||
-            location.start.cfi.indexOf(initialLocation) !== -1 ||
-            initialLocation.indexOf(location.start.cfi) !== -1 ||
-            (location.start.href && initialLocation.indexOf(location.start.href) !== -1) ||
-            (location.start.href && location.start.href.indexOf(initialLocation) !== -1);
+        // Navigation settling: if we're not ready yet and display has resolved,
+        // start/reset a settle timer. If no more relocated events fire within 200ms,
+        // we consider navigation settled and show the viewer.
+        if (!isReady && displayResolved) {
+          clearTimeout(settleTimeout);
 
-          debugLog("[EPUB] atCorrectLocation=" + atCorrectLocation);
-
-          if (atCorrectLocation) {
-            isReady = true;
-            clearTimeout(readyTimeout);
-            document.getElementById('viewer').style.visibility = 'visible';
-
-            debugLog("[EPUB] Sending onReady");
-            reactNativeWebview.postMessage(JSON.stringify({
-              type: "onReady",
-              totalLocations: book.locations.total,
-              currentLocation: location,
-              progress: percentage,
-            }));
+          if (isAtCorrectLocation(location)) {
+            debugLog("[EPUB] relocated: at correct location, setting settle timeout (200ms)");
+            settleTimeout = setTimeout(function() {
+              debugLog("[EPUB] Settle timeout fired after 200ms, no more relocated events");
+              // Triple rAF for paint safety
+              requestAnimationFrame(function() {
+                debugLog("[EPUB] rAF 1 complete");
+                requestAnimationFrame(function() {
+                  debugLog("[EPUB] rAF 2 complete");
+                  requestAnimationFrame(function() {
+                    debugLog("[EPUB] rAF 3 complete, calling showViewer");
+                    showViewer();
+                  });
+                });
+              });
+            }, 200);
+          } else {
+            debugLog("[EPUB] relocated: NOT at correct location yet, waiting...");
           }
         }
 
@@ -360,6 +436,7 @@ export default `
       });
 
       rendition.on("rendered", function (section, view) {
+        debugLog("[EPUB] 'rendered' event fired, section.href=" + section.href + ", isReady=" + isReady);
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onRendered',
           section: section,
