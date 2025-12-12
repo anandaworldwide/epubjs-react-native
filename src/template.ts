@@ -58,31 +58,55 @@ export default `
       const initialLocations = window.locations;
       const initialLocation = window.initialLocation;
       const enableSelection = window.enable_selection;
+      const enableDebugLogging = window.enableDebugLogging;
+
+      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+
+      function debugLog(msg) {
+        if (enableDebugLogging) {
+          reactNativeWebview.postMessage(JSON.stringify({ type: "onDebug", message: msg }));
+        }
+      }
+
+      debugLog("[EPUB] Template starting, type=" + type + ", file exists=" + !!file);
 
       if (!file) {
+        debugLog("[EPUB] ERROR: No file provided");
         alert('Failed load book');
       }
 
-      if (type === 'epub' || type === 'opf' || type === 'binary') {
-        book = ePub(file);
-      } else if (type === 'base64') {
-        book = ePub(file, { encoding: "base64" });
-      } else {
-        alert('Missing file type');
+      try {
+        if (type === 'epub' || type === 'opf' || type === 'binary') {
+          book = ePub(file);
+        } else if (type === 'base64') {
+          book = ePub(file, { encoding: "base64" });
+        } else {
+          debugLog("[EPUB] ERROR: Unknown type: " + type);
+          alert('Missing file type');
+        }
+        debugLog("[EPUB] Book created successfully");
+      } catch (bookErr) {
+        debugLog("[EPUB] ERROR creating book: " + (bookErr.message || String(bookErr)));
+        throw bookErr;
       }
 
-      rendition = book.renderTo("viewer", {
-        width: "100%",
-        height: "100%",
-        manager: "default",
-        flow: "auto",
-        snap: undefined,
-        spread: undefined,
-        fullsize: undefined,
-        allowPopups: allowPopups,
-        allowScriptedContent: allowScriptedContent
-      });
-     const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+      try {
+        rendition = book.renderTo("viewer", {
+          width: "100%",
+          height: "100%",
+          manager: "default",
+          flow: "auto",
+          snap: undefined,
+          spread: undefined,
+          fullsize: undefined,
+          allowPopups: allowPopups,
+          allowScriptedContent: allowScriptedContent
+        });
+        debugLog("[EPUB] Rendition created successfully");
+      } catch (rendErr) {
+        debugLog("[EPUB] ERROR creating rendition: " + (rendErr.message || String(rendErr)));
+        throw rendErr;
+      }
       reactNativeWebview.postMessage(JSON.stringify({ type: "onStarted" }));
 
       function flatten(chapters) {
@@ -164,33 +188,45 @@ export default `
 
       book.ready
         .then(function () {
+          debugLog("[EPUB] book.ready resolved");
           if (initialLocations) {
-            return book.locations.load(initialLocations);
+            debugLog("[EPUB] initialLocations provided, count: " + initialLocations.length);
+            try {
+              book.locations.load(initialLocations);
+              debugLog("[EPUB] book.locations.load() completed successfully");
+            } catch (loadErr) {
+              debugLog("[EPUB] book.locations.load() FAILED: " + (loadErr.message || String(loadErr)));
+              throw loadErr;
+            }
+          } else {
+            book.locations.generate(1600).then(function () {
+              reactNativeWebview.postMessage(JSON.stringify({
+                type: "onLocationsReady",
+                epubKey: book.key(),
+                locations: book.locations.save(),
+                totalLocations: book.locations.total,
+                currentLocation: rendition.currentLocation(),
+                progress: book.locations.percentageFromCfi(rendition.currentLocation().start.cfi),
+              }));
+            });
           }
-
-          book.locations.generate(1600).then(function () {
-            reactNativeWebview.postMessage(JSON.stringify({
-              type: "onLocationsReady",
-              epubKey: book.key(),
-              locations: book.locations.save(),
-              totalLocations: book.locations.total,
-              currentLocation: rendition.currentLocation(),
-              progress: book.locations.percentageFromCfi(rendition.currentLocation().start.cfi),
-            }));
-          });
         })
         .then(function () {
           // Display at initial location - onReady will be sent from relocated handler
+          debugLog("[EPUB] Calling rendition.display() with initialLocation: " + initialLocation);
           rendition.display(initialLocation || undefined);
 
           // Fallback timeout to show viewer if location matching fails
           readyTimeout = setTimeout(function() {
+            debugLog("[EPUB] Fallback timeout fired, isReady=" + isReady);
             if (!isReady) {
-              isReady = true;
-              document.getElementById('viewer').style.visibility = 'visible';
               var currentLocation = rendition.currentLocation();
+              debugLog("[EPUB] Fallback: currentLocation=" + (currentLocation ? "exists" : "null"));
               if (currentLocation) {
+                isReady = true;
+                document.getElementById('viewer').style.visibility = 'visible';
                 var percent = book.locations.percentageFromCfi(currentLocation.start.cfi);
+                debugLog("[EPUB] Fallback: Sending onReady");
                 reactNativeWebview.postMessage(JSON.stringify({
                   type: "onReady",
                   totalLocations: book.locations.total,
@@ -198,6 +234,7 @@ export default `
                   progress: Math.floor(percent * 100),
                 }));
               }
+              // Don't set isReady=true if currentLocation is null - let relocated handler try
             }
           }, 500);
 
@@ -249,11 +286,12 @@ export default `
           });
         })
         .catch(function (err) {
+          debugLog("[EPUB] Promise chain error: " + (err.message || String(err)));
           reactNativeWebview.postMessage(JSON.stringify({
-          type: "onDisplayError",
-          reason: reason
-        }));
-      });
+            type: "onDisplayError",
+            reason: err.message || String(err)
+          }));
+        });
 
       rendition.on('started', () => {
         rendition.themes.register({ theme: theme });
@@ -265,6 +303,8 @@ export default `
         var percentage = Math.floor(percent * 100);
         var chapter = getChapter(location);
 
+        debugLog("[EPUB] relocated event, isReady=" + isReady + ", initialLocation=" + initialLocation);
+
         // Show viewer and send onReady only when we're at the correct location
         if (!isReady) {
           // Check if we've reached the initial location (or if none was specified)
@@ -274,11 +314,14 @@ export default `
             (location.start.href && initialLocation.indexOf(location.start.href) !== -1) ||
             (location.start.href && location.start.href.indexOf(initialLocation) !== -1);
 
+          debugLog("[EPUB] atCorrectLocation=" + atCorrectLocation);
+
           if (atCorrectLocation) {
             isReady = true;
             clearTimeout(readyTimeout);
             document.getElementById('viewer').style.visibility = 'visible';
 
+            debugLog("[EPUB] Sending onReady");
             reactNativeWebview.postMessage(JSON.stringify({
               type: "onReady",
               totalLocations: book.locations.total,

@@ -145,6 +145,11 @@ export function View({
 
     const { type } = parsedEvent;
 
+    if (type === 'onDebug') {
+      console.log('[EPUB WebView]', parsedEvent.message || JSON.stringify(parsedEvent));
+      return;
+    }
+
     if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
       return onWebViewMessage(parsedEvent);
     }

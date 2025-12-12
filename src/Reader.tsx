@@ -36,6 +36,7 @@ export function Reader({
   spread,
   fullsize,
   charactersPerLocation,
+  enableDebugLogging = false,
   ...rest
 }: ReaderProps) {
   const {
@@ -108,6 +109,7 @@ export function Reader({
                 fullsize,
                 charactersPerLocation,
                 initialLocation,
+                enableDebugLogging,
               })
             );
 
@@ -131,6 +133,7 @@ export function Reader({
                 fullsize,
                 charactersPerLocation,
                 initialLocation,
+                enableDebugLogging,
               })
             );
 
@@ -164,6 +167,7 @@ export function Reader({
                 fullsize,
                 charactersPerLocation,
                 initialLocation,
+                enableDebugLogging,
               })
             );
 
@@ -193,6 +197,7 @@ export function Reader({
                 fullsize,
                 charactersPerLocation,
                 initialLocation,
+                enableDebugLogging,
               })
             );
 
@@ -208,6 +213,7 @@ export function Reader({
     defaultTheme,
     documentDirectory,
     downloadFile,
+    enableDebugLogging,
     enableSelection,
     initialLocation,
     initialLocations,

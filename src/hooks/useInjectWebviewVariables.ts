@@ -22,6 +22,7 @@ export function useInjectWebViewVariables() {
       fullsize,
       charactersPerLocation = 1600,
       initialLocation,
+      enableDebugLogging = false,
     }: {
       jszip: string;
       epubjs: string;
@@ -39,6 +40,7 @@ export function useInjectWebViewVariables() {
       fullsize?: boolean;
       charactersPerLocation?: number;
       initialLocation?: string;
+      enableDebugLogging?: boolean;
     }) => {
       return template
         .replace(
@@ -83,6 +85,10 @@ export function useInjectWebViewVariables() {
         .replace(
           /book\.locations\.generate\(1600\)/,
           `book.locations.generate(${charactersPerLocation})`
+        )
+        .replace(
+          /const enableDebugLogging = window.enableDebugLogging;/,
+          `const enableDebugLogging = ${enableDebugLogging};`
         );
     },
     []

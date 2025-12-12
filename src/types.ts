@@ -502,4 +502,11 @@ export interface ReaderProps {
    * Default is 1600
    */
   charactersPerLocation?: number;
+
+  /**
+   * Enable debug logging to help diagnose issues with epub loading.
+   * Debug messages will be logged via console.log with prefix "[EPUB WebView]".
+   * Default is false
+   */
+  enableDebugLogging?: boolean;
 }

@@ -150,6 +150,8 @@ export default function App() {
 | `waitForLocationsReady`           |  `boolean`    | only render book after locations generated                                                                           |
 | `keepScrollOffsetOnLocationChange` | `boolean` | Prevents scroll top when change location. Works with `scrolled-doc` flow.
 | `charactersPerLocation`           | `number`    | Default is 1600                                                                          |
+| `initialLocations`           | `ePubCfi[]`    | Pre-generated locations array to skip location generation on load. Optional.             |
+| `enableDebugLogging`           | `boolean`    | Enable debug logging for troubleshooting. Default is `false`.                            |
 
 ## Hooks
 
@@ -229,6 +231,35 @@ The `meta` object contains:
 - [Examples running on Bare React Native Project](example-bare/App.tsx)
 
 Did you like this project? Consider [sponsoring](https://www.paypal.com/donate/?business=YNAUBS5LFN5KN&no_recurring=1&currency_code=USD) the development of this project to keep it alive! ❤️
+
+## Troubleshooting
+
+### Debug Logging
+
+If you're experiencing issues with book loading (e.g., spinner showing indefinitely, `onReady` not firing), you can enable debug logging to diagnose the problem:
+
+```tsx
+<Reader
+  src={bookSrc}
+  fileSystem={useFileSystem}
+  enableDebugLogging={true}
+/>
+```
+
+This will output detailed logs to the console with the prefix `[EPUB WebView]`, showing:
+- Template initialization
+- Book and rendition creation
+- Location loading progress
+- Display and ready state transitions
+
+### Common Issues
+
+**Book not displaying with `initialLocations`**
+
+If you're using `initialLocations` to skip location generation and the book fails to load:
+1. Enable debug logging to see where the loading process stalls
+2. Ensure `initialLocations` is a valid array of ePubCfi strings
+3. Try clearing app data/cache as the WebView template may be cached
 
 ## License
 
