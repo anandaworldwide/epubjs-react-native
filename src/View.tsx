@@ -150,11 +150,6 @@ export function View({
       return;
     }
 
-    // Debug logging for key events
-    if (type === 'onStarted' || type === 'onReady' || type === 'onRendered' || type === 'onLocationChange') {
-      console.log('[EPUB RN] Received:', type, 'isRendering:', isRendering);
-    }
-
     if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
       return onWebViewMessage(parsedEvent);
     }
@@ -167,7 +162,6 @@ export function View({
     }
 
     if (type === 'onStarted') {
-      console.log('[EPUB RN] onStarted received, setting isRendering=true');
       setIsRendering(true);
 
       changeTheme(defaultTheme);
@@ -177,7 +171,6 @@ export function View({
 
     if (type === 'onReady') {
       const { totalLocations, currentLocation, progress } = parsedEvent;
-      console.log('[EPUB RN] onReady received, waitForLocationsReady:', waitForLocationsReady, 'will set isRendering:', !waitForLocationsReady ? 'false' : 'unchanged');
 
       if (initialAnnotations) {
         setInitialAnnotations(initialAnnotations);
@@ -191,7 +184,6 @@ export function View({
       // Use setTimeout to give extra buffer time for WebView to settle
       if (!waitForLocationsReady) {
         setTimeout(() => {
-          console.log('[EPUB RN] Timeout fired (50ms), now calling setIsRendering(false)');
           setIsRendering(false);
         }, 50);
       }
