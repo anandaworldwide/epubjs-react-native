@@ -69,6 +69,7 @@ export default `
       var lastRelocatedLocation = null;
       var relocatedCount = 0;
       var startTime = Date.now();
+      var documentsWithClickHandler = new WeakSet();
 
       const type = window.type;
       const file = window.book;
@@ -472,7 +473,10 @@ export default `
 
         // Intercept internal link clicks and handle via message passing
         // This is more reliable than onShouldStartLoadWithRequest which can become flaky
-        if (view && view.document) {
+        // Use WeakSet to prevent adding duplicate listeners on the same document
+        if (view && view.document && !documentsWithClickHandler.has(view.document)) {
+          documentsWithClickHandler.add(view.document);
+
           view.document.addEventListener('click', function(e) {
             var link = e.target.closest ? e.target.closest('a[href]') : null;
             if (!link) return;
