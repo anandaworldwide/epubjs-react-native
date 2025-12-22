@@ -111,6 +111,7 @@ export function View({
     setFlow,
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
+  const lastInternalLinkPressTime = useRef<number>(0);
   const [selectedText, setSelectedText] = useState<{
     cfiRange: string;
     cfiRangeText: string;
@@ -289,6 +290,8 @@ export function View({
 
     if (type === 'onInternalLinkPress') {
       const { href } = parsedEvent;
+      // Record the time to suppress tap gestures that fire simultaneously
+      lastInternalLinkPressTime.current = Date.now();
       goToLocation(href);
       return;
     }
@@ -426,10 +429,19 @@ export function View({
       width={width}
       height={height}
       onSingleTap={() => {
+        // Suppress tap if an internal link was just pressed (within 300ms)
+        // This prevents page flips when tapping links on screen edges
+        if (Date.now() - lastInternalLinkPressTime.current < 300) {
+          return;
+        }
         onPress();
         onSingleTap();
       }}
       onDoubleTap={() => {
+        // Suppress tap if an internal link was just pressed (within 300ms)
+        if (Date.now() - lastInternalLinkPressTime.current < 300) {
+          return;
+        }
         onDoublePress();
         onDoubleTap();
       }}
