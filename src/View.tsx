@@ -294,8 +294,10 @@ export function View({
 
     if (type === 'onInternalLinkPress') {
       const { href } = parsedEvent;
+      console.log('[EPUB] onInternalLinkPress received, href=' + href);
       onInternalLinkPress?.(href);
       goToLocation(href);
+      console.log('[EPUB] goToLocation called');
       return;
     }
 
