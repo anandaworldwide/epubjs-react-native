@@ -430,6 +430,12 @@ export interface ReaderProps {
   onPressExternalLink?: (url: string) => void;
 
   /**
+   * Function that is invoked when an internal link (footnote, TOC, etc.) is pressed.
+   * Useful for coordinating with outer gesture handlers to prevent page flips on link taps.
+   */
+  onInternalLinkPress?: (href: string) => void;
+
+  /**
    * An array of objects which will be shown when selecting text. An empty array will suppress the menu.
    * These will appear after a long press to select text.
    * @platform ios, android

@@ -13,6 +13,7 @@ const INTERNAL_EVENTS = [
   'onFinish',
   'onRendered',
   'onInternalLinkPress',
+  'onContentTap',
   'onLayout',
   'onNavigationLoaded',
   'onAddAnnotation',

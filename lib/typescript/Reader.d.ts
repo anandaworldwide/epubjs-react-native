@@ -1,3 +1,3 @@
 import type { ReaderProps } from './types';
-export declare function Reader({ src, width, height, defaultTheme, initialLocations, initialLocation, allowScriptedContent, onPressExternalLink, renderLoadingFileComponent, fileSystem: useFileSystem, menuItems, manager, flow, snap, spread, fullsize, charactersPerLocation, enableDebugLogging, ...rest }: ReaderProps): JSX.Element;
+export declare function Reader({ src, width, height, defaultTheme, initialLocations, initialLocation, allowScriptedContent, onPressExternalLink, onInternalLinkPress, renderLoadingFileComponent, fileSystem: useFileSystem, menuItems, manager, flow, snap, spread, fullsize, charactersPerLocation, enableDebugLogging, ...rest }: ReaderProps): JSX.Element;
 //# sourceMappingURL=Reader.d.ts.map

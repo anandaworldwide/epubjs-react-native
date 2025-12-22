@@ -36,8 +36,9 @@ export function View({
   onFinish = () => {},
   onPress = () => {},
   onSingleTap = () => {},
-  onDoublePress = () => {},
-  onDoubleTap = () => {},
+  // Double tap callbacks kept for API compatibility
+  onDoublePress: _onDoublePress = () => {},
+  onDoubleTap: _onDoubleTap = () => {},
   onLongPress = () => {},
   width,
   height,
@@ -59,6 +60,7 @@ export function View({
     height: height || Dimensions.get('screen').height,
   },
   onPressExternalLink,
+  onInternalLinkPress,
   menuItems,
   onAddAnnotation = () => {},
   onChangeAnnotations = () => {},
@@ -111,7 +113,6 @@ export function View({
     setFlow,
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
-  const lastInternalLinkPressTime = useRef<number>(0);
   const [selectedText, setSelectedText] = useState<{
     cfiRange: string;
     cfiRangeText: string;
@@ -147,7 +148,10 @@ export function View({
     const { type } = parsedEvent;
 
     if (type === 'onDebug') {
-      console.log('[EPUB WebView]', parsedEvent.message || JSON.stringify(parsedEvent));
+      console.log(
+        '[EPUB WebView]',
+        parsedEvent.message || JSON.stringify(parsedEvent)
+      );
       return;
     }
 
@@ -290,9 +294,41 @@ export function View({
 
     if (type === 'onInternalLinkPress') {
       const { href } = parsedEvent;
-      // Record the time to suppress tap gestures that fire simultaneously
-      lastInternalLinkPressTime.current = Date.now();
+      onInternalLinkPress?.(href);
       goToLocation(href);
+      return;
+    }
+
+    if (type === 'onContentTap') {
+      const { tapZone } = parsedEvent;
+
+      if (tapZone === 'left') {
+        // Left zone tap - go to previous page
+        if (enableSwipe) {
+          goPrevious({
+            keepScrollOffset: keepScrollOffsetOnLocationChange,
+          });
+          onSwipeRight();
+        }
+      } else if (tapZone === 'right') {
+        // Right zone tap - go to next page
+        if (enableSwipe) {
+          goNext({
+            keepScrollOffset: keepScrollOffsetOnLocationChange,
+          });
+          onSwipeLeft();
+        }
+      }
+      return;
+    }
+
+    if (type === 'toggle-fullscreen') {
+      // Center tap - call tap callbacks and pass to onWebViewMessage
+      onPress();
+      onSingleTap();
+      if (onWebViewMessage) {
+        onWebViewMessage(parsedEvent);
+      }
       return;
     }
 
@@ -400,16 +436,19 @@ export function View({
   const handleOnShouldStartLoadWithRequest = (
     request: ShouldStartLoadRequest
   ) => {
-    // Internal link navigation is now handled via JavaScript message passing
-    // (onInternalLinkPress) which is more reliable than this native callback.
-    // This handler now only deals with external links.
-
+    // Handle mailto/tel links
     if (
       (request.url.includes('mailto:') || request.url.includes('tel:')) &&
       onPressExternalLink
     ) {
       onPressExternalLink(request.url);
+      return true;
     }
+
+    // Detect internal link navigation (URL differs from main document)
+    // This catches edge cases where browser's native hit testing detects a link
+    // that our JavaScript closest() missed (e.g., tapping a few pixels outside a link)
+    // Let native navigation proceed - epub.js will handle it
 
     return true;
   };
@@ -429,21 +468,12 @@ export function View({
       width={width}
       height={height}
       onSingleTap={() => {
-        // Suppress tap if an internal link was just pressed (within 300ms)
-        // This prevents page flips when tapping links on screen edges
-        if (Date.now() - lastInternalLinkPressTime.current < 300) {
-          return;
-        }
-        onPress();
-        onSingleTap();
+        // Single taps are now handled via WebView onContentTap messages
+        // This callback is kept for GestureHandler interface but won't be called
       }}
       onDoubleTap={() => {
-        // Suppress tap if an internal link was just pressed (within 300ms)
-        if (Date.now() - lastInternalLinkPressTime.current < 300) {
-          return;
-        }
-        onDoublePress();
-        onDoubleTap();
+        // Double taps are now handled via WebView onContentTap messages
+        // This callback is kept for GestureHandler interface but won't be called
       }}
       onLongPress={onLongPress}
       onSwipeLeft={() => {

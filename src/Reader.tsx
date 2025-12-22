@@ -25,6 +25,7 @@ export function Reader({
   initialLocation,
   allowScriptedContent = Platform.OS === 'ios',
   onPressExternalLink,
+  onInternalLinkPress,
   renderLoadingFileComponent = (props) => (
     <LoadingFile {...props} width={width} height={height} />
   ),
@@ -276,6 +277,7 @@ export function Reader({
         height={height}
         defaultTheme={defaultTheme || initialTheme}
         onPressExternalLink={onPressExternalLink}
+        onInternalLinkPress={onInternalLinkPress}
         enableSelection={enableSelection}
         menuItems={menuItems}
         manager={manager}

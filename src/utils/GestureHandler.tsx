@@ -24,8 +24,10 @@ interface Props {
 export function GestureHandler({
   width = '100%',
   height = '100%',
-  onSingleTap,
-  onDoubleTap,
+  // Single and double taps are now handled via WebView onContentTap messages
+  // These props are kept for API compatibility but not used here
+  onSingleTap: _onSingleTap,
+  onDoubleTap: _onDoubleTap,
   onSwipeLeft,
   onSwipeRight,
   onSwipeUp,
@@ -33,16 +35,8 @@ export function GestureHandler({
   onLongPress,
   children,
 }: Props) {
-  const singleTap = Gesture.Tap()
-    .runOnJS(true)
-    .maxDuration(250)
-    .onStart(onSingleTap);
-
-  const doubleTap = Gesture.Tap()
-    .runOnJS(true)
-    .maxDuration(250)
-    .numberOfTaps(2)
-    .onStart(onDoubleTap);
+  // Tap gestures are handled via WebView touch events (onContentTap messages)
+  // Only swipes and long press are handled here
 
   const longPress = Gesture.LongPress().runOnJS(true).onStart(onLongPress);
 
@@ -66,24 +60,6 @@ export function GestureHandler({
     .direction(Directions.DOWN)
     .onStart(onSwipeDown);
 
-  let lastTap: number | null = null;
-  let timer: NodeJS.Timeout;
-
-  const handleDoubleTap = () => {
-    if (lastTap) {
-      onDoubleTap();
-      clearTimeout(timer);
-      lastTap = null;
-    } else {
-      lastTap = Date.now();
-      timer = setTimeout(() => {
-        onSingleTap();
-        lastTap = null;
-        clearTimeout(timer);
-      }, 500);
-    }
-  };
-
   if (Platform.OS === 'ios') {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -93,14 +69,11 @@ export function GestureHandler({
             swipeRight,
             swipeUp,
             swipeDown,
-            longPress,
-            doubleTap,
-            singleTap
+            longPress
           )}
         >
           <TouchableWithoutFeedback
             style={{ width, height }}
-            onPress={() => Platform.OS === 'ios' && handleDoubleTap()}
             onLongPress={() => Platform.OS === 'ios' && onLongPress()}
           >
             {children}
@@ -117,9 +90,7 @@ export function GestureHandler({
           swipeRight,
           swipeUp,
           swipeDown,
-          longPress,
-          doubleTap,
-          singleTap
+          longPress
         )}
       >
         <View style={{ width, height }}>{children}</View>

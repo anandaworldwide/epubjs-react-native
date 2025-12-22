@@ -12,6 +12,6 @@ interface Props {
     onLongPress: () => void;
     children: React.ReactNode;
 }
-export declare function GestureHandler({ width, height, onSingleTap, onDoubleTap, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, onLongPress, children, }: Props): React.JSX.Element;
+export declare function GestureHandler({ width, height, onSingleTap: _onSingleTap, onDoubleTap: _onDoubleTap, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, onLongPress, children, }: Props): React.JSX.Element;
 export {};
 //# sourceMappingURL=GestureHandler.d.ts.map
