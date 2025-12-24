@@ -156,7 +156,8 @@ export function View({
     }
 
     if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
-      return onWebViewMessage(parsedEvent);
+      onWebViewMessage(parsedEvent);
+      return;
     }
 
     delete parsedEvent.type;
@@ -171,7 +172,8 @@ export function View({
 
       changeTheme(defaultTheme);
 
-      return onStarted();
+      onStarted();
+      return;
     }
 
     if (type === 'onReady') {
@@ -193,20 +195,23 @@ export function View({
         }, 50);
       }
 
-      return onReady(totalLocations, currentLocation, progress);
+      onReady(totalLocations, currentLocation, progress);
+      return;
     }
 
     if (type === 'onDisplayError') {
       const { reason } = parsedEvent;
       setIsRendering(false);
 
-      return onDisplayError(reason);
+      onDisplayError(reason);
+      return;
     }
 
     if (type === 'onResized') {
       const { layout } = parsedEvent;
 
-      return onResized(layout);
+      onResized(layout);
+      return;
     }
 
     if (type === 'onLocationChange') {
@@ -229,12 +234,13 @@ export function View({
         setAtStart(false);
         setAtEnd(false);
       }
-      return onLocationChange(
+      onLocationChange(
         totalLocations,
         currentLocation,
         progress,
         currentSection
       );
+      return;
     }
 
     if (type === 'onSearch') {
@@ -242,7 +248,8 @@ export function View({
       setSearchResults({ results, totalResults });
       setIsSearching(false);
 
-      return onSearch(results, totalResults);
+      onSearch(results, totalResults);
+      return;
     }
 
     if (type === 'onLocationsReady') {
@@ -258,43 +265,49 @@ export function View({
         setIsRendering(false);
       }
 
-      return onLocationsReady(epubKey, parsedEvent.locations);
+      onLocationsReady(epubKey, parsedEvent.locations);
+      return;
     }
 
     if (type === 'onSelected') {
       const { cfiRange, text } = parsedEvent;
 
       setSelectedText({ cfiRange, cfiRangeText: text });
-      return onSelected(text, cfiRange);
+      onSelected(text, cfiRange);
+      return;
     }
 
     if (type === 'onOrientationChange') {
       const { orientation } = parsedEvent;
 
-      return onOrientationChange(orientation);
+      onOrientationChange(orientation);
+      return;
     }
 
     if (type === 'onBeginning') {
       setAtStart(true);
 
-      return onBeginning();
+      onBeginning();
+      return;
     }
 
     if (type === 'onFinish') {
       setAtEnd(true);
 
-      return onFinish();
+      onFinish();
+      return;
     }
 
     if (type === 'onRendered') {
       const { currentSection } = parsedEvent;
 
-      return onRendered(parsedEvent.section, currentSection);
+      onRendered(parsedEvent.section, currentSection);
+      return;
     }
 
     if (type === 'onInternalLinkPress') {
       const { href } = parsedEvent;
-      console.log('[EPUB] onInternalLinkPress received, href=' + href);
+      console.log(`[EPUB] onInternalLinkPress received, href=${href}`);
       onInternalLinkPress?.(href);
       goToLocation(href);
       console.log('[EPUB] goToLocation called');
@@ -337,7 +350,8 @@ export function View({
     if (type === 'onLayout') {
       const { layout } = parsedEvent;
 
-      return onLayout(layout);
+      onLayout(layout);
+      return;
     }
 
     if (type === 'onNavigationLoaded') {
@@ -346,31 +360,35 @@ export function View({
       setToc(toc);
       setLandmarks(landmarks);
 
-      return onNavigationLoaded({ toc, landmarks });
+      onNavigationLoaded({ toc, landmarks });
+      return;
     }
 
     if (type === 'onAddAnnotation') {
       const { annotation } = parsedEvent;
 
-      return onAddAnnotation(annotation);
+      onAddAnnotation(annotation);
+      return;
     }
 
     if (type === 'onChangeAnnotations') {
       const { annotations } = parsedEvent;
       setAnnotations(annotations);
-      return onChangeAnnotations(annotations);
+      onChangeAnnotations(annotations);
+      return;
     }
 
     if (type === 'onSetInitialAnnotations') {
       const { annotations } = parsedEvent;
       setAnnotations(annotations);
-      return () => {};
+      return;
     }
 
     if (type === 'onPressAnnotation') {
       const { annotation } = parsedEvent;
 
-      return onPressAnnotation(annotation);
+      onPressAnnotation(annotation);
+      return;
     }
 
     if (type === 'onAddBookmark') {
@@ -379,7 +397,8 @@ export function View({
       setBookmarks([...bookmarks, bookmark]);
       onAddBookmark(bookmark);
       handleChangeIsBookmarked([...bookmarks, bookmark]);
-      return onChangeBookmarks([...bookmarks, bookmark]);
+      onChangeBookmarks([...bookmarks, bookmark]);
+      return;
     }
 
     if (type === 'onRemoveBookmark') {
@@ -389,14 +408,14 @@ export function View({
       handleChangeIsBookmarked(
         bookmarks.filter(({ id }) => id !== bookmark.id)
       );
-      return onChangeBookmarks(
-        bookmarks.filter(({ id }) => id !== bookmark.id)
-      );
+      onChangeBookmarks(bookmarks.filter(({ id }) => id !== bookmark.id));
+      return;
     }
 
     if (type === 'onRemoveBookmarks') {
       handleChangeIsBookmarked([]);
-      return onChangeBookmarks([]);
+      onChangeBookmarks([]);
+      return;
     }
 
     if (type === 'onUpdateBookmark') {
@@ -408,10 +427,8 @@ export function View({
 
       onUpdateBookmark(bookmark);
       handleChangeIsBookmarked(Bookmarks);
-      return onChangeBookmarks(Bookmarks);
+      onChangeBookmarks(Bookmarks);
     }
-
-    return () => {};
   };
 
   const handleOnCustomMenuSelection = (event: {
