@@ -183,6 +183,50 @@ export default `
           allowScriptedContent: allowScriptedContent
         });
         debugLog("[EPUB] Rendition created successfully");
+
+        // Wrap rendition.display() to add layout stabilization for CFI-based navigation
+        // This fixes search results navigating to wrong locations deep in chapters
+        var originalDisplay = rendition.display.bind(rendition);
+
+        function waitForLayoutStable() {
+          return new Promise(function(resolve) {
+            requestAnimationFrame(function() {
+              requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                  setTimeout(resolve, 50);
+                });
+              });
+            });
+          });
+        }
+
+        rendition.display = function(target) {
+          var isCfi = target && typeof target === 'string' && target.indexOf('epubcfi(') === 0;
+          debugLog("[EPUB] display() wrapper called, isCfi=" + isCfi);
+
+          return originalDisplay(target).then(function(section) {
+            if (isCfi) {
+              return waitForLayoutStable().then(function() {
+                debugLog("[EPUB] Layout stabilized, re-positioning for CFI");
+                // Re-calculate and apply position after layout is stable
+                var currentView = rendition.manager.current();
+                if (currentView) {
+                  var pos = currentView.locationOf(target);
+                  var width = currentView.width();
+                  debugLog("[EPUB] Re-calculated position: left=" + pos.left + ", top=" + pos.top);
+                  if (pos && (pos.left !== 0 || pos.top !== 0)) {
+                    rendition.manager.moveTo(pos, width);
+                  }
+                }
+                return section;
+              });
+            }
+            return section;
+          });
+        };
+
+        debugLog("[EPUB] display() wrapper installed");
+
       } catch (rendErr) {
         debugLog("[EPUB] ERROR creating rendition: " + (rendErr.message || String(rendErr)));
         throw rendErr;
