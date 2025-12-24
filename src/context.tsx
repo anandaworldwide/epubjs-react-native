@@ -906,7 +906,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
         Promise.all(
           book.spine.spineItems.map((item) => {
             return item.load(book.load.bind(book)).then(() => {
-              let results = item.find(term.trim());
+              let results = item.search(term.trim());
               const locationHref = item.href;
 
               let [match] = flatten(book.navigation.toc)

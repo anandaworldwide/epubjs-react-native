@@ -9149,9 +9149,7 @@ export default `
                     .slice(0, a)
                     .reduce((t, e) => t + e.textContent.length, 0);
                   u.setEnd(c, d > o ? o : o - d), (r = n.cfiFromRange(u));
-                  let f = t
-                    .slice(0, a + 1)
-                    .reduce((t, e) => t + e.textContent, "");
+                  let f = t.reduce((acc, node) => acc + node.textContent, "");
                   f.length > 150 &&
                     ((f = f.substring(e - 75, e + 75)),
                     (f = "..." + f + "...")),
