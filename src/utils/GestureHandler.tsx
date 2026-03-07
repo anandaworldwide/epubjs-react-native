@@ -73,6 +73,7 @@ export function GestureHandler({
           )}
         >
           <TouchableWithoutFeedback
+            accessible={false}
             style={{ width, height }}
             onLongPress={() => Platform.OS === 'ios' && onLongPress()}
           >
